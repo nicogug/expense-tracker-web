@@ -6,6 +6,7 @@ Next.js 16 App Router starter with Supabase, shadcn/ui, Tailwind v4, and GSAP.
 
 ```bash
 supabase start      # Start local DB (Docker required)
+pnpm seed:demo      # Seed database with demo data (optional)
 pnpm dev           # Dev server at http://localhost:3000
 ```
 
@@ -15,6 +16,7 @@ pnpm dev           # Dev server at http://localhost:3000
 - `pnpm build` - Production build (Turbopack)
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint
+- `pnpm seed:demo` - Seed database with demo user and sample data
 
 ## Environment Setup
 
@@ -68,11 +70,29 @@ Components are added to `components/ui/` with automatic configuration.
 
 ```bash
 supabase migration new <name>           # Create new migration
-supabase db reset                       # Apply migrations + seed data
+supabase db reset                       # Apply migrations (fresh database)
 supabase gen types typescript --local > lib/supabase/types.ts  # Generate types
 ```
 
 Access Supabase Studio: http://127.0.0.1:54323
+
+## Database Seeding
+
+**Demo Data Script** (`scripts/seed-demo-data.ts`):
+- Creates a demo user with credentials
+- Seeds 15 default categories
+- Populates sample expenses (last 30 days)
+- Sets up a monthly budget
+
+```bash
+pnpm seed:demo         # Run the seeding script
+```
+
+**Demo Credentials** (after running script):
+- Email: `demo@example.com`
+- Password: `Demo123!`
+
+**Note**: The script uses the Supabase service role key to bypass RLS. Running it multiple times will clean up existing demo data and re-seed.
 
 ## Detailed Documentation
 

@@ -24,6 +24,8 @@ import {
 import { ExpensesPieChart } from "./expenses-pie-chart";
 import { BudgetSetterDialog } from "@/components/budget-setter-dialog";
 import { TransactionsTable } from "@/components/transactions-table";
+import { AddExpenseDialog } from "@/components/add-expense-dialog";
+import { FloatingAddButton } from "@/components/floating-add-button";
 import { getCurrentMonthBudget } from "@/lib/supabase/queries/budgets";
 import {
   getCurrentMonthTotal,
@@ -31,6 +33,7 @@ import {
   getCurrentMonthCategoryTotals,
   getCurrentMonthTransactionsWithCategories,
 } from "@/lib/supabase/queries/expenses";
+import { getCategories } from "@/lib/supabase/queries/categories";
 
 export const metadata = {
   title: "Dashboard | Expense Tracker",
@@ -55,12 +58,14 @@ export default async function DashboardPage() {
     expenses,
     categoryTotals,
     transactionsWithCategories,
+    categories,
   ] = await Promise.all([
     getCurrentMonthBudget(),
     getCurrentMonthTotal(),
     getCurrentMonthExpenses(),
     getCurrentMonthCategoryTotals(),
     getCurrentMonthTransactionsWithCategories(),
+    getCategories(),
   ]);
 
   // Calculate stats
@@ -87,12 +92,7 @@ export default async function DashboardPage() {
             Welcome back, {user.email?.split("@")[0]}
           </p>
         </div>
-        <Link href="/expenses/add">
-          <Button size="lg" className="gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Add Expense
-          </Button>
-        </Link>
+        <AddExpenseDialog categories={categories} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -279,6 +279,8 @@ export default async function DashboardPage() {
           <TransactionsTable transactions={transactionsWithCategories} />
         </CardContent>
       </Card>
+
+      <FloatingAddButton categories={categories} />
     </div>
   );
 }
