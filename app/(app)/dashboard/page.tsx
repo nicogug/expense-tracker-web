@@ -23,11 +23,13 @@ import {
 } from "lucide-react";
 import { ExpensesPieChart } from "./expenses-pie-chart";
 import { BudgetSetterDialog } from "@/components/budget-setter-dialog";
+import { TransactionsTable } from "@/components/transactions-table";
 import { getCurrentMonthBudget } from "@/lib/supabase/queries/budgets";
 import {
   getCurrentMonthTotal,
   getCurrentMonthExpenses,
   getCurrentMonthCategoryTotals,
+  getCurrentMonthTransactionsWithCategories,
 } from "@/lib/supabase/queries/expenses";
 
 export const metadata = {
@@ -47,11 +49,18 @@ export default async function DashboardPage() {
   });
 
   // Fetch real data
-  const [budget, totalExpenses, expenses, categoryTotals] = await Promise.all([
+  const [
+    budget,
+    totalExpenses,
+    expenses,
+    categoryTotals,
+    transactionsWithCategories,
+  ] = await Promise.all([
     getCurrentMonthBudget(),
     getCurrentMonthTotal(),
     getCurrentMonthExpenses(),
     getCurrentMonthCategoryTotals(),
+    getCurrentMonthTransactionsWithCategories(),
   ]);
 
   // Calculate stats
@@ -265,24 +274,7 @@ export default async function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center space-y-3">
-                <div className="text-muted-foreground">
-                  <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  No expenses recorded yet
-                </p>
-                <Link href="/expenses/add">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Your First Expense
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <TransactionsTable transactions={transactionsWithCategories} />
         </CardContent>
       </Card>
     </div>
