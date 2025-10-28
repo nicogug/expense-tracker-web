@@ -217,3 +217,46 @@ export async function updatePassword(formData: FormData): Promise<ActionResult> 
 
   return { success: true }
 }
+
+/**
+ * Sign in with Google OAuth
+ *
+ * This creates the OAuth URL and redirects the user to Google for authentication.
+ * After successful auth, Google redirects back to your callback URL.
+ *
+ * @returns Object with error message if failed
+ *
+ * @example
+ * ```tsx
+ * 'use client'
+ * import { signInWithGoogle } from '@/lib/supabase/mutations/auth'
+ *
+ * export function GoogleSignInButton() {
+ *   return (
+ *     <form action={signInWithGoogle}>
+ *       <button type="submit">Sign in with Google</button>
+ *     </form>
+ *   )
+ * }
+ * ```
+ */
+export async function signInWithGoogle(): Promise<ActionResult> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
+
+  return { error: 'Failed to get OAuth URL' }
+}
