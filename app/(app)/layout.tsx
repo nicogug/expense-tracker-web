@@ -1,30 +1,28 @@
-import { requireAuth } from '@/lib/auth/route-protection'
-import { AppHeader } from '@/components/layout/app-header'
-import { AppSidebar } from '@/components/layout/app-sidebar'
-import { MobileNav } from '@/components/layout/mobile-nav'
+import { requireAuth } from "@/lib/auth/route-protection";
+import { getCurrentUser } from "@/lib/supabase/queries/auth";
+import { AppHeader } from "@/components/layout/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
+import { MobileNav } from "@/components/layout/mobile-nav";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AppLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  await requireAuth()
+  await requireAuth();
+  const user = await getCurrentUser();
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-
-      <div className="flex">
-        <AppSidebar />
-
-        <main className="flex-1 p-6 lg:p-8 pb-20 lg:pb-8">
-          <div className="mx-auto max-w-7xl">
-            {children}
-          </div>
-        </main>
-      </div>
-
+    <SidebarProvider>
+      <AppSidebar user={user} />
+      <SidebarInset>
+        <AppHeader />
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pb-20 md:pb-4 lg:gap-6 lg:p-6">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </div>
+      </SidebarInset>
       <MobileNav />
-    </div>
-  )
+    </SidebarProvider>
+  );
 }
