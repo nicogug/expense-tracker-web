@@ -15,6 +15,8 @@ import {
 import {
   ChartConfig,
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
@@ -34,11 +36,11 @@ interface ExpensesPieChartProps {
 function convertToChartData(categoryTotals: CategoryTotal[]) {
   // Define chart colors using CSS variables - following the shadcn pattern
   const chartColors = [
-    "var(--color-chrome)",
-    "var(--color-safari)",
-    "var(--color-firefox)",
-    "var(--color-edge)",
-    "var(--color-other)",
+    "var(--chart-1)",
+    "var(--chart-2)",
+    "var(--chart-3)",
+    "var(--chart-4)",
+    "var(--chart-5)",
   ];
 
   return categoryTotals.map((cat, index) => ({
@@ -115,18 +117,20 @@ export function ExpensesPieChart({ categoryTotals }: ExpensesPieChartProps) {
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto max-h-[350px] w-full"
         >
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent hideLabel className="min-w-[120px]" />
+              }
             />
             <Pie
               data={chartData}
               dataKey="amount"
               nameKey="category"
-              innerRadius={60}
+              innerRadius={80}
               strokeWidth={5}
             >
               <Label
@@ -141,15 +145,15 @@ export function ExpensesPieChart({ categoryTotals }: ExpensesPieChartProps) {
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          y={(viewBox.cy || 0) - 8}
+                          className="fill-foreground text-2xl font-bold"
                         >
                           ${totalExpenses.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 20}
+                          className="fill-muted-foreground text-sm"
                         >
                           Total Expenses
                         </tspan>
@@ -159,6 +163,10 @@ export function ExpensesPieChart({ categoryTotals }: ExpensesPieChartProps) {
                 }}
               />
             </Pie>
+            <ChartLegend
+              content={<ChartLegendContent nameKey="category" />}
+              className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center"
+            />
           </PieChart>
         </ChartContainer>
       </CardContent>
