@@ -1,17 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -26,8 +19,6 @@ import {
   Search,
   X,
   Filter,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import type { Category } from "@/lib/supabase/queries/categories";
 import type { ExpenseFilters as FilterType } from "@/lib/supabase/queries/expenses";
@@ -76,7 +67,7 @@ export function ExpenseFilters({
   const applyFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Clear all filter params first
+    // Clear filter params
     params.delete("search");
     params.delete("startDate");
     params.delete("endDate");
@@ -107,7 +98,17 @@ export function ExpenseFilters({
     setSelectedPaymentMethods([]);
     setMinAmount("");
     setMaxAmount("");
-    router.push("/expenses");
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("search");
+    params.delete("startDate");
+    params.delete("endDate");
+    params.delete("categories");
+    params.delete("paymentMethods");
+    params.delete("minAmount");
+    params.delete("maxAmount");
+
+    router.push(`/expenses?${params.toString()}`);
   };
 
   const toggleCategory = (categoryId: string) => {
@@ -147,8 +148,8 @@ export function ExpenseFilters({
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-4">
+      <CardContent className="pt-4 px-4 sm:px-6 md:px-8 lg:px-12">
+        <div className="space-y-3">
           {/* Search Bar - Always visible */}
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -160,20 +161,20 @@ export function ExpenseFilters({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") applyFilters();
                 }}
-                className="pl-9"
+                className="pl-9 h-9"
               />
             </div>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="relative"
+              className="relative h-9 w-9"
             >
               <Filter className="h-4 w-4" />
               {activeFilterCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -right-2 -top-2 h-5 w-5 rounded-full p-0 text-xs"
+                  className="absolute -right-1 -top-1 h-4 w-4 rounded-full p-0 text-[10px]"
                 >
                   {activeFilterCount}
                 </Badge>
@@ -183,21 +184,21 @@ export function ExpenseFilters({
 
           {/* Expanded Filters */}
           {isExpanded && (
-            <div className="space-y-4 border-t pt-4">
+            <div className="space-y-3 border-t pt-3">
               {/* Date Range */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Start Date</label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Start Date</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal h-9 text-sm",
                           !startDate && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                         {startDate ? (
                           format(startDate, "PPP")
                         ) : (
@@ -216,18 +217,18 @@ export function ExpenseFilters({
                   </Popover>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">End Date</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">End Date</label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal h-9 text-sm",
                           !endDate && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                         {endDate ? (
                           format(endDate, "PPP")
                         ) : (
@@ -248,11 +249,11 @@ export function ExpenseFilters({
               </div>
 
               {/* Amount Range */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Min Amount</label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Min Amount</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                       $
                     </span>
                     <Input
@@ -262,15 +263,15 @@ export function ExpenseFilters({
                       placeholder="0.00"
                       value={minAmount}
                       onChange={(e) => setMinAmount(e.target.value)}
-                      className="pl-7"
+                      className="pl-7 h-9"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Max Amount</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Max Amount</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                       $
                     </span>
                     <Input
@@ -280,16 +281,16 @@ export function ExpenseFilters({
                       placeholder="0.00"
                       value={maxAmount}
                       onChange={(e) => setMaxAmount(e.target.value)}
-                      className="pl-7"
+                      className="pl-7 h-9"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Categories */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Categories</label>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Categories</label>
+                <div className="flex flex-wrap gap-1.5">
                   {categories.map((category) => (
                     <Badge
                       key={category.id}
@@ -298,7 +299,7 @@ export function ExpenseFilters({
                           ? "default"
                           : "outline"
                       }
-                      className="cursor-pointer"
+                      className="cursor-pointer text-xs h-6"
                       onClick={() => toggleCategory(category.id)}
                     >
                       <span className="mr-1">{category.icon}</span>
@@ -309,9 +310,9 @@ export function ExpenseFilters({
               </div>
 
               {/* Payment Methods */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Payment Methods</label>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Payment Methods</label>
+                <div className="flex flex-wrap gap-1.5">
                   {paymentMethods.map((method) => (
                     <Badge
                       key={method.value}
@@ -320,7 +321,7 @@ export function ExpenseFilters({
                           ? "default"
                           : "outline"
                       }
-                      className="cursor-pointer"
+                      className="cursor-pointer text-xs h-6"
                       onClick={() => togglePaymentMethod(method.value)}
                     >
                       {method.label}
@@ -330,20 +331,21 @@ export function ExpenseFilters({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2">
-                <Button onClick={applyFilters} className="flex-1">
-                  Apply Filters
-                </Button>
+              <div className="flex justify-end gap-2 pt-1">
                 {hasActiveFilters && (
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={clearFilters}
-                    className="gap-2"
+                    size="sm"
+                    className="gap-1.5"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                     Clear
                   </Button>
                 )}
+                <Button onClick={applyFilters} size="sm">
+                  Apply
+                </Button>
               </div>
             </div>
           )}
