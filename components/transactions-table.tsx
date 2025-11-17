@@ -44,7 +44,10 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
         accessorKey: "expense_date",
         header: "Date",
         cell: ({ row }) => {
-          const date = new Date(row.getValue("expense_date"));
+          // Parse date string (YYYY-MM-DD) manually to avoid timezone issues
+          const dateString = row.getValue("expense_date") as string;
+          const [year, month, day] = dateString.split("-").map(Number);
+          const date = new Date(year, month - 1, day);
           return (
             <div className="font-medium">
               {date.toLocaleDateString("en-US", {

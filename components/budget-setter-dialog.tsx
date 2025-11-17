@@ -66,7 +66,7 @@ export function BudgetSetterDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
+          <DialogHeader className="space-y-3">
             <DialogTitle>Set Monthly Budget</DialogTitle>
             <DialogDescription>
               Set your spending limit for{" "}
@@ -83,8 +83,8 @@ export function BudgetSetterDialog({
               })()}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
+          <div className="grid gap-6 py-6">
+            <div className="grid gap-3">
               <Label htmlFor="amount">Budget Amount (USD)</Label>
               <Input
                 id="amount"
@@ -100,7 +100,7 @@ export function BudgetSetterDialog({
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -110,7 +110,7 @@ export function BudgetSetterDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Budget"}
+              {isPending ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>

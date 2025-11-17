@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,7 +38,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { expenseFormSchema, type ExpenseFormData } from "@/lib/validations/expense";
+import {
+  expenseFormSchema,
+  type ExpenseFormData,
+} from "@/lib/validations/expense";
 import { createExpense } from "@/lib/supabase/mutations/expenses";
 import type { Category } from "@/lib/supabase/queries/categories";
 import { toast } from "sonner";
@@ -66,7 +69,10 @@ const paymentMethods = [
   { value: "other", label: "Other", icon: HelpCircle },
 ] as const;
 
-export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps) {
+export function AddExpenseDialog({
+  categories,
+  trigger,
+}: AddExpenseDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -81,6 +87,20 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
       notes: "",
     },
   });
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      form.reset({
+        amount: undefined,
+        category_id: "",
+        expense_date: new Date(),
+        description: "",
+        payment_method: undefined,
+        notes: "",
+      });
+    }
+  }, [open, form]);
 
   const onSubmit = async (data: ExpenseFormData) => {
     setIsSubmitting(true);
@@ -136,13 +156,18 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 pt-2"
+          >
             <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
+                  <FormLabel>
+                    Amount <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -155,7 +180,9 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
                         placeholder="0.00"
                         className="pl-7"
                         {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value))
+                        }
                         value={field.value || ""}
                         disabled={isSubmitting}
                         autoFocus
@@ -172,14 +199,16 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
               name="category_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>
+                    Category <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     disabled={isSubmitting}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
@@ -204,7 +233,9 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
               name="expense_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>
+                    Date <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -247,14 +278,14 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
               name="payment_method"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Payment Method (Optional)</FormLabel>
+                  <FormLabel>Payment Method</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     disabled={isSubmitting}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
                     </FormControl>
@@ -282,7 +313,7 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., Grocery shopping"
@@ -300,7 +331,7 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Add any additional notes..."
@@ -325,7 +356,7 @@ export function AddExpenseDialog({ categories, trigger }: AddExpenseDialogProps)
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Expense"}
+                {isSubmitting ? "Creating..." : "Create"}
               </Button>
             </DialogFooter>
           </form>
