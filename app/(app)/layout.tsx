@@ -15,7 +15,7 @@ export default async function AppLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar user={user} />
+      <AppSidebar user={user || undefined} />
       <SidebarInset>
         <AppHeader />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0 pb-20 md:pb-4 lg:gap-6 lg:p-6">

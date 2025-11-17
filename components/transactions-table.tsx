@@ -8,7 +8,6 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   Table,
@@ -18,9 +17,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Expense } from "@/lib/supabase/queries/expenses";
+import { cn, parseLocalDate } from "@/lib/utils";
 
 interface TransactionWithCategory extends Expense {
   category_name: string;
@@ -38,16 +46,49 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     pageSize: 10,
   });
 
+  const generatePageNumbers = (currentPage: number, totalPages: number) => {
+    const pages: (number | "ellipsis")[] = [];
+
+    if (totalPages <= 7) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push("ellipsis");
+      }
+
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push("ellipsis");
+      }
+
+      // Always show last page
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
   const columns: ColumnDef<TransactionWithCategory>[] = React.useMemo(
     () => [
       {
         accessorKey: "expense_date",
         header: "Date",
         cell: ({ row }) => {
-          // Parse date string (YYYY-MM-DD) manually to avoid timezone issues
           const dateString = row.getValue("expense_date") as string;
-          const [year, month, day] = dateString.split("-").map(Number);
-          const date = new Date(year, month - 1, day);
+          const date = parseLocalDate(dateString);
           return (
             <div className="font-medium">
               {date.toLocaleDateString("en-US", {
@@ -195,49 +236,70 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="text-muted-foreground text-sm">
-          Showing{" "}
-          {table.getState().pagination.pageIndex *
-            table.getState().pagination.pageSize +
-            1}{" "}
-          to{" "}
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
-            table.getFilteredRowModel().rows.length
-          )}{" "}
-          of {table.getFilteredRowModel().rows.length} transactions
+      {table.getPageCount() > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (table.getCanPreviousPage()) {
+                      table.previousPage();
+                    }
+                  }}
+                  aria-disabled={!table.getCanPreviousPage()}
+                  className={cn(
+                    !table.getCanPreviousPage() &&
+                      "pointer-events-none opacity-50"
+                  )}
+                />
+              </PaginationItem>
+
+              {generatePageNumbers(
+                table.getState().pagination.pageIndex + 1,
+                table.getPageCount()
+              ).map((page, index) => (
+                <PaginationItem key={index}>
+                  {page === "ellipsis" ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        table.setPageIndex(page - 1);
+                      }}
+                      isActive={
+                        table.getState().pagination.pageIndex === page - 1
+                      }
+                    >
+                      {page}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (table.getCanNextPage()) {
+                      table.nextPage();
+                    }
+                  }}
+                  aria-disabled={!table.getCanNextPage()}
+                  className={cn(
+                    !table.getCanNextPage() && "pointer-events-none opacity-50"
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
-          <div className="flex items-center gap-1">
-            <span className="text-sm text-muted-foreground">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="gap-1"
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

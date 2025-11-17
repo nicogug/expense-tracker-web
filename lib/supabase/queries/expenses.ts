@@ -153,7 +153,18 @@ export const getCurrentMonthCategoryTotals = cache(
   }
 );
 
-export interface TransactionWithCategory extends Expense {
+export interface TransactionWithCategory {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  expense_date: string;
+  category_id: string | null;
+  description: string | null;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
   category_name: string;
   category_icon: string;
   category_color: string;
@@ -211,3 +222,152 @@ export const getCurrentMonthTransactionsWithCategories = cache(
     }));
   }
 );
+
+export interface ExpenseFilters {
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  categoryIds?: string[];
+  paymentMethods?: string[];
+  minAmount?: number;
+  maxAmount?: number;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedExpenses {
+  data: TransactionWithCategory[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export async function getFilteredExpenses(
+  filters: ExpenseFilters
+): Promise<PaginatedExpenses> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return {
+      data: [],
+      totalCount: 0,
+      page: filters.page || 1,
+      pageSize: filters.pageSize || 20,
+      totalPages: 0,
+    };
+  }
+
+  // Set pagination defaults
+  const page = filters.page || 1;
+  const pageSize = filters.pageSize || 20;
+  const offset = (page - 1) * pageSize;
+
+  // Build base query for data
+  let query = supabase
+    .from("expenses")
+    .select(
+      `
+      *,
+      categories (
+        name,
+        icon,
+        color
+      )
+    `
+    )
+    .eq("user_id", user.id);
+
+  // Build count query (same filters, no pagination)
+  let countQuery = supabase
+    .from("expenses")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  // Apply filters to both queries
+  if (filters.startDate) {
+    query = query.gte("expense_date", filters.startDate);
+    countQuery = countQuery.gte("expense_date", filters.startDate);
+  }
+
+  if (filters.endDate) {
+    query = query.lte("expense_date", filters.endDate);
+    countQuery = countQuery.lte("expense_date", filters.endDate);
+  }
+
+  if (filters.categoryIds && filters.categoryIds.length > 0) {
+    query = query.in("category_id", filters.categoryIds);
+    countQuery = countQuery.in("category_id", filters.categoryIds);
+  }
+
+  if (filters.paymentMethods && filters.paymentMethods.length > 0) {
+    query = query.in("payment_method", filters.paymentMethods);
+    countQuery = countQuery.in("payment_method", filters.paymentMethods);
+  }
+
+  if (filters.minAmount !== undefined) {
+    query = query.gte("amount", filters.minAmount);
+    countQuery = countQuery.gte("amount", filters.minAmount);
+  }
+
+  if (filters.maxAmount !== undefined) {
+    query = query.lte("amount", filters.maxAmount);
+    countQuery = countQuery.lte("amount", filters.maxAmount);
+  }
+
+  // Apply ordering and pagination to data query only
+  query = query.order("expense_date", { ascending: false });
+
+  // Execute queries in parallel
+  const [{ data, error }, { count, error: countError }] = await Promise.all([
+    query.range(offset, offset + pageSize - 1),
+    countQuery,
+  ]);
+
+  if (error || !data || countError) {
+    return {
+      data: [],
+      totalCount: 0,
+      page,
+      pageSize,
+      totalPages: 0,
+    };
+  }
+
+  let results = data.map((expense: any) => ({
+    ...expense,
+    category_name: expense.categories?.name || "Uncategorized",
+    category_icon: expense.categories?.icon || "📝",
+    category_color: expense.categories?.color || "#64748b",
+  }));
+
+  // Apply search filter (client-side for description search)
+  let totalCount = count || 0;
+  if (filters.search && filters.search.trim()) {
+    const searchLower = filters.search.toLowerCase();
+    results = results.filter(
+      (expense) =>
+        expense.description?.toLowerCase().includes(searchLower) ||
+        expense.category_name.toLowerCase().includes(searchLower) ||
+        expense.notes?.toLowerCase().includes(searchLower)
+    );
+    // Note: When using client-side search, totalCount may not be accurate
+    // For accurate count with search, consider using full-text search in Supabase
+    totalCount = results.length;
+  }
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    data: results,
+    totalCount,
+    page,
+    pageSize,
+    totalPages,
+  };
+}

@@ -11,7 +11,7 @@ import { useGSAP } from '@/hooks/use-gsap'
 export function GSAPExample() {
   const container = useRef<HTMLDivElement>(null)
   const boxRef = useRef<HTMLDivElement>(null)
-  const circleRef = useRef<HTMLDivElement>(null)
+  const circleRef = useRef<HTMLButtonElement>(null)
 
   // Example 1: Auto-play animation on mount
   useGSAP(

@@ -10,12 +10,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -42,23 +40,24 @@ import {
   expenseFormSchema,
   type ExpenseFormData,
 } from "@/lib/validations/expense";
-import { createExpense } from "@/lib/supabase/mutations/expenses";
+import { updateExpense } from "@/lib/supabase/mutations/expenses";
 import type { Category } from "@/lib/supabase/queries/categories";
+import type { TransactionWithCategory } from "@/lib/supabase/queries/expenses";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   CalendarIcon,
-  Plus,
   CreditCard,
   Banknote,
-  Wallet,
   Building2,
   HelpCircle,
 } from "lucide-react";
 
-interface AddExpenseDialogProps {
+interface EditExpenseDialogProps {
+  expense: TransactionWithCategory;
   categories: Category[];
-  trigger?: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const paymentMethods = [
@@ -69,45 +68,44 @@ const paymentMethods = [
   { value: "other", label: "Other", icon: HelpCircle },
 ] as const;
 
-export function AddExpenseDialog({
+export function EditExpenseDialog({
+  expense,
   categories,
-  trigger,
-}: AddExpenseDialogProps) {
-  const [open, setOpen] = useState(false);
+  open,
+  onOpenChange,
+}: EditExpenseDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ExpenseFormData>({
     // @ts-expect-error - zod v4 type compatibility issue with @hookform/resolvers
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      amount: undefined,
-      category_id: "",
-      expense_date: new Date(),
-      description: "",
-      payment_method: undefined,
-      notes: "",
+      amount: expense.amount,
+      category_id: expense.category_id || "",
+      expense_date: new Date(expense.expense_date),
+      description: expense.description || "",
+      payment_method: expense.payment_method as any,
+      notes: expense.notes || "",
     },
   });
 
-  // Reset form when dialog closes
+  // Reset form when expense changes
   useEffect(() => {
-    if (!open) {
-      form.reset({
-        amount: undefined,
-        category_id: "",
-        expense_date: new Date(),
-        description: "",
-        payment_method: undefined,
-        notes: "",
-      });
-    }
-  }, [open, form]);
+    form.reset({
+      amount: expense.amount,
+      category_id: expense.category_id || "",
+      expense_date: new Date(expense.expense_date),
+      description: expense.description || "",
+      payment_method: expense.payment_method as any,
+      notes: expense.notes || "",
+    });
+  }, [expense, form]);
 
   const onSubmit = async (data: ExpenseFormData) => {
     setIsSubmitting(true);
 
     try {
-      const result = await createExpense({
+      const result = await updateExpense(expense.id, {
         amount: data.amount,
         category_id: data.category_id,
         expense_date: format(data.expense_date, "yyyy-MM-dd"),
@@ -117,20 +115,15 @@ export function AddExpenseDialog({
       });
 
       if (result.error) {
-        toast.error("Failed to create expense", {
+        toast.error("Failed to update expense", {
           description: result.error,
         });
       } else {
-        toast.success("Expense created successfully", {
-          description: `$${data.amount.toFixed(2)} added to ${
-            categories.find((c) => c.id === data.category_id)?.name || "Unknown"
-          }`,
-        });
-        form.reset();
-        setOpen(false);
+        toast.success("Expense updated successfully");
+        onOpenChange(false);
       }
     } catch (error) {
-      toast.error("Failed to create expense", {
+      toast.error("Failed to update expense", {
         description: "An unexpected error occurred",
       });
     } finally {
@@ -139,20 +132,12 @@ export function AddExpenseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button size="lg" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Expense
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-3">
-          <DialogTitle>Add New Expense</DialogTitle>
+          <DialogTitle>Edit Expense</DialogTitle>
           <DialogDescription>
-            Enter the details of your expense below.
+            Update the details of your expense below.
           </DialogDescription>
         </DialogHeader>
 
@@ -351,13 +336,13 @@ export function AddExpenseDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create"}
+                {isSubmitting ? "Updating..." : "Update"}
               </Button>
             </DialogFooter>
           </form>

@@ -7,7 +7,7 @@ export const expenseFormSchema = z.object({
     .max(999999999.99, "Amount is too large"),
   category_id: z.string().uuid("Please select a category"),
   expense_date: z.date({
-    required_error: "Please select a date",
+    message: "Please select a date",
   }),
   description: z.string().optional(),
   payment_method: z

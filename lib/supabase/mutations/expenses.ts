@@ -114,3 +114,36 @@ export async function updateExpense(
     return { error: "Failed to update expense" };
   }
 }
+
+export async function bulkDeleteExpenses(
+  expenseIds: string[]
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Unauthorized" };
+    }
+
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .in("id", expenseIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/expenses");
+    return { success: true };
+  } catch (err) {
+    return { error: "Failed to delete expenses" };
+  }
+}
